@@ -15,14 +15,3 @@ data class CalendarEntry (
     val notes: String?,
     var attended: Boolean
 )
-
-data class CalendarEntryResult (
-    @Id val id: String,
-    val title: String,
-    val start: Date,
-    val end: Date,
-    val location: GeoJsonPoint,
-    val notes: String?,
-    var attended: Boolean,
-    val distance: Double
-)

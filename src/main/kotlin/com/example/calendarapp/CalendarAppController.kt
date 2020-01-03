@@ -8,9 +8,11 @@ import org.springframework.data.mongodb.core.aggregation.AggregationOperation
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.NearQuery
+import org.springframework.data.mongodb.core.query.Query
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.util.*
 
 @RestController
@@ -53,6 +55,19 @@ class CalendarAppController {
         return calendarRepository.findAll()
     }
 
+    @GetMapping("/date")
+    fun getCalendarEntriesForDate(
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") date: Date?
+    ): List<CalendarEntry> {
+        val timeCriteria: Criteria = if (date != null) {
+            Criteria("start").lte(date).and("end").gte(date)
+        } else {
+            Criteria("start").lte(LocalDateTime.now()).and("end").gte(LocalDateTime.now())
+        }
+        return mongoTemplate
+                .find(Query(timeCriteria), CalendarEntry::class.javaObjectType)
+    }
+
     @PostMapping("/entries")
     fun saveCalendarEntry(
             @RequestParam(required = true) id: String,
@@ -76,5 +91,39 @@ class CalendarAppController {
         calendarRepository.save(entry)
     }
 
+    @GetMapping("/report")
+    fun getDoneReport(
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") start: Date?,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") end: Date?
+    ): Double {
+        val allCriteria = Criteria()
+        val attendedCriteria = Criteria("attended").`is`(true)
+        var startVal = start ?: Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant())
+
+        val endVal = if (end != null) {
+            end
+        } else {
+            val cal = Calendar.getInstance()
+            cal.time = startVal
+            cal.add(Calendar.DATE, -1)
+            val tmp = startVal
+            startVal = Date(cal.timeInMillis)
+            tmp
+        }
+        println("start $startVal end $endVal")
+        attendedCriteria.orOperator(
+                Criteria.where("start").gte(startVal).lte(endVal),
+                Criteria.where("end").gte(startVal).lte(endVal)
+        )
+        allCriteria.orOperator(
+                Criteria.where("start").gte(startVal).lte(endVal),
+                Criteria.where("end").gte(startVal).lte(endVal)
+        )
+
+        val all = mongoTemplate.count(Query(allCriteria), CalendarEntry::class.javaObjectType)
+        val attended = mongoTemplate.count(Query(attendedCriteria), CalendarEntry::class.javaObjectType)
+        println("all $all attended $attended")
+        return if (all.compareTo(0) == 0) { 0.0 } else { attended/all.toDouble() }
+    }
     
 }
