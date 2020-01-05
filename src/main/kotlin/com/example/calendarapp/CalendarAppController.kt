@@ -74,7 +74,7 @@ class CalendarAppController {
             @RequestParam(required = true) longitude: Double,
             @RequestParam(required = true) latitude: Double,
             @RequestParam(required = false) notes: String?
-    ) {
+    ): CalendarEntry {
         val point = GeoJsonPoint(longitude, latitude)
         val entry = CalendarEntry(
                 id = id,
@@ -85,7 +85,7 @@ class CalendarAppController {
                 notes = notes,
                 attended = false
         )
-        calendarRepository.save(entry)
+        return calendarRepository.save(entry)
     }
 
     @GetMapping("/report")
