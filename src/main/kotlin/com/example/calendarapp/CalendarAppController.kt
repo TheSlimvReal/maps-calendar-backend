@@ -36,7 +36,7 @@ class CalendarAppController {
         val undoneCriteria = Criteria("attended").`is`(false)
         operations.add(match(undoneCriteria))
 
-        val timeCriteria = Criteria("start").lte(LocalDateTime.now()).and("end").gte(LocalDateTime.now())
+        val timeCriteria = Criteria("start").lte(getCurrentTime()).and("end").gte(getCurrentTime())
         operations.add(match(timeCriteria))
 
         val pipeline = newAggregation(operations)
@@ -59,11 +59,8 @@ class CalendarAppController {
     fun getCalendarEntriesForDate(
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") date: Date?
     ): List<CalendarEntry> {
-        val timeCriteria: Criteria = if (date != null) {
-            Criteria("start").lte(date).and("end").gte(date)
-        } else {
-            Criteria("start").lte(LocalDateTime.now()).and("end").gte(LocalDateTime.now())
-        }
+        val newDate = date ?: getCurrentTime()
+        val timeCriteria = Criteria("start").lte(newDate).and("end").gte(newDate)
         return mongoTemplate
                 .find(Query(timeCriteria), CalendarEntry::class.javaObjectType)
     }
@@ -96,9 +93,9 @@ class CalendarAppController {
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") start: Date?,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") end: Date?
     ): Double {
+        val startDate = start ?: getCurrentTime()
         val allCriteria = Criteria()
-        val attendedCriteria = Criteria("attended").`is`(true)
-        var startVal = start ?: Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant())
+        var startVal = startDate
 
         val endVal = if (end != null) {
             end
@@ -111,19 +108,18 @@ class CalendarAppController {
             tmp
         }
         println("start $startVal end $endVal")
-        attendedCriteria.orOperator(
-                Criteria.where("start").gte(startVal).lte(endVal),
-                Criteria.where("end").gte(startVal).lte(endVal)
-        )
         allCriteria.orOperator(
-                Criteria.where("start").gte(startVal).lte(endVal),
-                Criteria.where("end").gte(startVal).lte(endVal)
+                Criteria.where("start").gte(startVal).lt(endVal),
+                Criteria.where("end").gte(startVal).lt(endVal)
         )
 
         val all = mongoTemplate.count(Query(allCriteria), CalendarEntry::class.javaObjectType)
-        val attended = mongoTemplate.count(Query(attendedCriteria), CalendarEntry::class.javaObjectType)
+        val attended = mongoTemplate.count(Query(allCriteria.and("attended").`is`(true)), CalendarEntry::class.javaObjectType)
         println("all $all attended $attended")
         return if (all.compareTo(0) == 0) { 0.0 } else { attended/all.toDouble() }
     }
-    
+
+    fun getCurrentTime(): Date {
+        return Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant())
+    }
 }
