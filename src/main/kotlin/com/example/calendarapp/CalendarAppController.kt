@@ -15,6 +15,7 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.*
 
+@CrossOrigin(origins = ["*"])
 @RestController
 class CalendarAppController {
     @Autowired lateinit var calendarRepository: CalendarEntriesRepository
@@ -57,7 +58,7 @@ class CalendarAppController {
 
     @GetMapping("/date")
     fun getCalendarEntriesForDate(
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") date: Date?
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) date: Date?
     ): List<CalendarEntry> {
         val newDate = date ?: getCurrentTime()
         val timeCriteria = Criteria("start").lte(newDate).and("end").gte(newDate)
@@ -69,8 +70,8 @@ class CalendarAppController {
     fun saveCalendarEntry(
             @RequestParam(required = true) id: String,
             @RequestParam(required = true) title: String,
-            @RequestParam(required = true) @DateTimeFormat(pattern = "yyyy-MM-dd") start: Date,
-            @RequestParam(required = true) @DateTimeFormat(pattern = "yyyy-MM-dd") end: Date,
+            @RequestParam(required = true) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) start: Date,
+            @RequestParam(required = true) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) end: Date,
             @RequestParam(required = true) longitude: Double,
             @RequestParam(required = true) latitude: Double,
             @RequestParam(required = false) notes: String?
@@ -90,8 +91,8 @@ class CalendarAppController {
 
     @GetMapping("/report")
     fun getDoneReport(
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") start: Date?,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") end: Date?
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) start: Date?,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) end: Date?
     ): Double {
         val startDate = start ?: getCurrentTime()
         val allCriteria = Criteria()

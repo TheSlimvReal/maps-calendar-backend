@@ -13,14 +13,3 @@ class CalendarAppApplication
 fun main(args: Array<String>) {
     runApplication<CalendarAppApplication>(*args)
 }
-
-@Bean fun corsConfigurationSource(): CorsConfigurationSource {
-    val config = CorsConfiguration()
-    config.allowedOrigins = listOf("*")
-    config.allowedMethods = listOf("GET", "POST", "OPTIONS", "DELETE", "PUT", "PATCH")
-    config.allowedHeaders = listOf("X-Requested-With", "Origin", "Content-Type", "Accept", "Authorization")
-    config.allowCredentials = true
-    val source = UrlBasedCorsConfigurationSource()
-    source.registerCorsConfiguration("/**", config)
-    return source
-}
