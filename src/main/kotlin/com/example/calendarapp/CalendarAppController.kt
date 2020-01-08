@@ -65,7 +65,7 @@ class CalendarAppController {
         c.time = newDate
         c.add(Calendar.DATE, 1)
         val endDate = c.time
-        val timeCriteria = Criteria("start").gte(newDate).lte(endDate)
+        val timeCriteria = Criteria("end").gte(newDate).and("start").lte(endDate)
         return mongoTemplate
                 .find(Query(timeCriteria), CalendarEntry::class.javaObjectType)
     }
