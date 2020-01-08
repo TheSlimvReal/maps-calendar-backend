@@ -13,6 +13,7 @@ import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 @CrossOrigin(origins = ["*"])
@@ -61,7 +62,11 @@ class CalendarAppController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) date: Date?
     ): List<CalendarEntry> {
         val newDate = date ?: getCurrentTime()
-        val timeCriteria = Criteria("start").lte(newDate).and("end").gte(newDate)
+        val c = Calendar.getInstance()
+        c.time = newDate
+        c.add(Calendar.DATE, 1)
+        val endDate = c.time
+        val timeCriteria = Criteria("start").gte(newDate).lte(endDate)
         return mongoTemplate
                 .find(Query(timeCriteria), CalendarEntry::class.javaObjectType)
     }
