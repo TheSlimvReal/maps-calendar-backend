@@ -1,6 +1,7 @@
 package com.example.calendarapp
 
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.domain.Sort
 import org.springframework.data.geo.Metrics
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.aggregation.Aggregation.*
@@ -53,7 +54,7 @@ class CalendarAppController {
 
     @GetMapping("/entries")
     fun getCalendarEntries(): List<CalendarEntry> {
-        return calendarRepository.findAll()
+        return calendarRepository.findAllByOrderByStartDesc()
     }
 
     @GetMapping("/date")
@@ -66,8 +67,9 @@ class CalendarAppController {
         c.add(Calendar.DATE, 1)
         val endDate = c.time
         val timeCriteria = Criteria("end").gte(newDate).and("start").lte(endDate)
+        val sort = Sort.by(Sort.Direction.ASC, "start", "end")
         return mongoTemplate
-                .find(Query(timeCriteria), CalendarEntry::class.javaObjectType)
+                .find(Query(timeCriteria).with(sort), CalendarEntry::class.javaObjectType)
     }
 
     @PostMapping("/entries")
@@ -122,6 +124,45 @@ class CalendarAppController {
         val attended = mongoTemplate.count(Query(allCriteria.and("attended").`is`(true)), CalendarEntry::class.javaObjectType)
         println("all $all attended $attended")
         return if (all.compareTo(0) == 0) { 0.0 } else { attended/all.toDouble() }
+    }
+
+    @GetMapping("/dayReport")
+    fun getDayReport(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) date: Date?
+    ): Double {
+        val end = date ?: this.getCurrentTime()
+        return this.getDoneReport(this.getStart(end, Calendar.DATE, -1), end)
+    }
+
+    @GetMapping("/weekReport")
+    fun getWeekReport(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) date: Date?
+    ): Double {
+        val end = date ?: this.getCurrentTime()
+        return this.getDoneReport(this.getStart(end, Calendar.DATE, -7), end)
+    }
+
+    @GetMapping("/monthReport")
+    fun getMonthReport(
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) date: Date?
+    ): Double {
+        val end = date ?: this.getCurrentTime()
+        return this.getDoneReport(this.getStart(end, Calendar.MONTH, -1), end)
+    }
+
+    @GetMapping("/yearReport")
+    fun getYearReport(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) date: Date?
+    ): Double {
+        val end = date ?: this.getCurrentTime()
+        return this.getDoneReport(this.getStart(end, Calendar.YEAR, -1), end)
+    }
+
+    fun getStart(date: Date, diffType: Int, diffAmount: Int): Date {
+        val cal = Calendar.getInstance()
+        cal.time = date
+        cal.add(diffType, diffAmount)
+        return cal.time
     }
 
     fun getCurrentTime(): Date {
