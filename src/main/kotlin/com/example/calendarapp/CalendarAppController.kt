@@ -158,6 +158,13 @@ class CalendarAppController {
         return this.getDoneReport(this.getStart(end, Calendar.YEAR, -1), end)
     }
 
+    @DeleteMapping("/entries")
+    fun deleteEntry(
+            @RequestParam id: String
+    ) {
+        return this.calendarRepository.deleteById(id)
+    }
+
     fun getStart(date: Date, diffType: Int, diffAmount: Int): Date {
         val cal = Calendar.getInstance()
         cal.time = date
