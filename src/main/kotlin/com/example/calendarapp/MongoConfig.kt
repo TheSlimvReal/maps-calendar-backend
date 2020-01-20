@@ -15,7 +15,7 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 @EnableMongoRepositories(basePackages = ["com.example.calendarapp"])
 class MongoConfig {
     @Bean fun mongoDbFactory(): MongoDbFactory {
-        val mongoClient = MongoClients.create("mongodb+srv://test:pass@car-finder-cluster-v4ued.mongodb.net/test?retryWrites=true&w=majority")
+        val mongoClient = MongoClients.create("YOUR MONGODB PATH GOES HERE")
         return SimpleMongoClientDbFactory(mongoClient, "calendar-db")
     }
 

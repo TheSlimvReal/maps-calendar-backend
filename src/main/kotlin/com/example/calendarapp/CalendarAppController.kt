@@ -32,7 +32,7 @@ class CalendarAppController {
         val nearQuery = NearQuery.near(location, Metrics.KILOMETERS)
         operations.add(geoNear(nearQuery, "distance"))
 
-        val leCriteria = Criteria("distance").lte(0.5)
+        val leCriteria = Criteria("distance").lte(0.2)
         operations.add(match(leCriteria))
 
         val undoneCriteria = Criteria("attended").`is`(false)
